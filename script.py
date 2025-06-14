@@ -1,24 +1,25 @@
 from PIL import Image, ImageOps
 import os
 
-# Dossier contenant les images
 input_folder = "./input"
-output_pdf = "output.pdf"
+output_folder = "./output"
 
-# Dimensions A4 en pixels à 300 DPI
+# Create the output folder if it doesn't exist
+os.makedirs(output_folder, exist_ok=True)
+
+# A4 dimensions in pixels at 300 DPI
 a4_width_px, a4_height_px = 2480, 3508
 
-images = []
 for filename in sorted(os.listdir(input_folder)):
-    if filename.lower().endswith(".jpg"):
+    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
         path = os.path.join(input_folder, filename)
         img = Image.open(path)
         img = ImageOps.exif_transpose(img).convert("RGB")
 
-        # Resize tout en gardant le ratio
+        # Resize while keeping the aspect ratio
         img.thumbnail((a4_width_px, a4_height_px), Image.LANCZOS)
 
-        # Centrer l'image sur une page A4 blanche
+        # Center the image on a white A4 page
         a4_page = Image.new(
             "RGB", (a4_width_px, a4_height_px), (255, 255, 255))
         offset = (
@@ -26,10 +27,9 @@ for filename in sorted(os.listdir(input_folder)):
             (a4_height_px - img.height) // 2,
         )
         a4_page.paste(img, offset)
-        images.append(a4_page)
 
-if images:
-    images[0].save(output_pdf, save_all=True, append_images=images[1:])
-    print(f"PDF généré : {output_pdf}")
-else:
-    print("Aucune image JPG trouvée.")
+        # PDF file name
+        base_name = os.path.splitext(filename)[0]
+        output_pdf_path = os.path.join(output_folder, f"{base_name}.pdf")
+        a4_page.save(output_pdf_path, "PDF")
+        print(f"PDF generated: {output_pdf_path}")
