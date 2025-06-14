@@ -1,4 +1,5 @@
-from PIL import Image, ImageOps
+from fpdf import FPDF
+from PIL import Image
 import os
 
 input_folder = "./input"
@@ -7,29 +8,25 @@ output_folder = "./output"
 # Create the output folder if it doesn't exist
 os.makedirs(output_folder, exist_ok=True)
 
-# A4 dimensions in pixels at 300 DPI
-a4_width_px, a4_height_px = 2480, 3508
-
 for filename in sorted(os.listdir(input_folder)):
-    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        path = os.path.join(input_folder, filename)
-        img = Image.open(path)
-        img = ImageOps.exif_transpose(img).convert("RGB")
+    if filename.lower().endswith(".jpg"):
+        image_path = os.path.join(input_folder, filename)
+        im = Image.open(image_path)
+        width, height = im.size
 
-        # Resize while keeping the aspect ratio
-        img.thumbnail((a4_width_px, a4_height_px), Image.LANCZOS)
+        # Rotate if landscape
+        if width > height:
+            im = im.transpose(Image.ROTATE_270)
 
-        # Center the image on a white A4 page
-        a4_page = Image.new(
-            "RGB", (a4_width_px, a4_height_px), (255, 255, 255))
-        offset = (
-            (a4_width_px - img.width) // 2,
-            (a4_height_px - img.height) // 2,
-        )
-        a4_page.paste(img, offset)
+        temp_path = os.path.join(output_folder, "temp.jpg")
+        im.save(temp_path)
 
-        # PDF file name
-        base_name = os.path.splitext(filename)[0]
-        output_pdf_path = os.path.join(output_folder, f"{base_name}.pdf")
-        a4_page.save(output_pdf_path, "PDF")
+        # Create PDF
+        pdf = FPDF(unit="mm", format="A4")
+        pdf.add_page()
+        pdf.image(temp_path, 0, 0, 210, 297)
+        output_pdf_path = os.path.join(
+            output_folder, f"{os.path.splitext(filename)[0]}.pdf")
+        pdf.output(output_pdf_path, "F")
+        os.remove(temp_path)
         print(f"PDF generated: {output_pdf_path}")
