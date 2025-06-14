@@ -46,6 +46,7 @@ python script.py
 
 - Python 3
 - [Pillow](https://python-pillow.org/) (`pip install pillow`)
+- [fpdf](https://www.fpdf.org/) (`pip install fpdf`)
 
 ## 💡 Use Cases
 
